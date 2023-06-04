@@ -5,6 +5,7 @@ import (
 	"dns-check/database"
 	"dns-check/model"
 	"dns-check/redisUtils"
+	"dns-check/utils"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -119,8 +120,14 @@ func StartJob(c *gin.Context) {
 	}
 	ok, _ := redisUtils.Exists("current_job")
 	if ok {
-		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "当前有其他任务正在进行中"})
-		return
+		currentJobByte, err := redisUtils.Get("current_job")
+		if err == nil {
+			jobIdStr := fmt.Sprintf("%s", currentJobByte)
+			jobId := utils.ConvertAStringToInt(jobIdStr)
+			if jobId != 0 {
+				db.Model(&model.Job{}).Where("id = ?", jobId).Updates(&model.Job{Status: 3})
+			}
+		}
 	}
 	redisUtils.Set("current_job", []byte(fmt.Sprintf("%d", job.ID)), 0)
 	job.Status = 2

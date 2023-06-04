@@ -29,7 +29,6 @@ func HandlerJob() {
 				redisUtils.Del("current_job")
 				db := database.GetInstance()
 				jobIdStr := fmt.Sprintf("%s", currentJobByte)
-				// conver jobIdStr to uint
 				jobId := utils.ConvertAStringToInt(jobIdStr)
 				db.Model(&model.Job{}).Where("id = ?", jobId).Update("status", 4)
 				redisUtils.Del(fmt.Sprintf("job_%s", currentJobByte))

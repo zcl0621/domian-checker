@@ -7,10 +7,10 @@ import (
 )
 
 type domainListRequest struct {
-	JobId    int `json:"job_id" form:"job_id" binding:"required"`
-	Page     int `json:"page" form:"page" binding:"required"`
-	PageSize int `json:"page_size" form:"page_size" binding:"required"`
-	Sort     int `json:"sort" form:"sort" binding:"required" default:"id desc"`
+	JobId    int    `json:"job_id" form:"job_id" binding:"required"`
+	Page     int    `json:"page" form:"page" binding:"required"`
+	PageSize int    `json:"page_size" form:"page_size" binding:"required"`
+	Sort     string `json:"sort" form:"sort" binding:"required"`
 }
 
 type domainListResponse struct {
