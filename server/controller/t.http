@@ -1,0 +1,31 @@
+### Login
+POST http://154.17.16.16:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "123456"
+}
+
+### AddJob
+POST http://127.0.0.1:8080/api/job/add
+Content-Type: application/json
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2ODUyNDM4Njh9.hpkLsT5d9JYQY-mhojfWyPaLe2t2HTddKtmPeBYCbmE
+
+{
+  "domains": [
+    "baidu.com",
+    "google.com"
+  ]
+}
+
+### JobNumb
+GET http://127.0.0.1:8080/api/job/numb
+Content-Type: application/json
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2ODUyNDM4Njh9.hpkLsT5d9JYQY-mhojfWyPaLe2t2HTddKtmPeBYCbmE
+
+
+### DomainList
+GET http://127.0.0.1:8080/api/domain/list?page=1&page_size=10&domain=baidu
+Content-Type: application/json
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2ODUyNDM4Njh9.hpkLsT5d9JYQY-mhojfWyPaLe2t2HTddKtmPeBYCbmE
