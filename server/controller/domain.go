@@ -10,6 +10,7 @@ type domainListRequest struct {
 	JobId    int `json:"job_id" form:"job_id" binding:"required"`
 	Page     int `json:"page" form:"page" binding:"required"`
 	PageSize int `json:"page_size" form:"page_size" binding:"required"`
+	Sort     int `json:"sort" form:"sort" binding:"required" default:"id desc"`
 }
 
 type domainListResponse struct {
@@ -28,6 +29,6 @@ func ListDomain(c *gin.Context) {
 	var domains []model.Domain
 	var count int64
 	sDB.Where("job_id = ?", request.JobId).Count(&count)
-	sDB.Order("id desc").Offset((request.Page - 1) * request.PageSize).Limit(request.PageSize).Scan(&domains)
+	sDB.Order(request.Sort).Offset((request.Page - 1) * request.PageSize).Limit(request.PageSize).Scan(&domains)
 	c.JSON(200, &domainListResponse{Count: count, Data: domains})
 }
