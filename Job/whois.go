@@ -6,14 +6,21 @@ import (
 )
 
 func checkWhois(j *Job) *whoisparser.Domain {
+	defer func() {
+		if err := recover(); err != nil {
+			j.Err = err.(error).Error()
+		}
+	}()
 	if j.Domain == "" {
 		return nil
 	}
 	var count int
 	for {
-		// 查询 WHOIS 信息
-		result, err := whoisClient.Whois(j.Domain)
-		if err == nil {
+		brow := OpenBrowser()
+		page := OpenPage(brow, "https://whois.iana.org")
+		SendSearch(page, j.Domain)
+		result := GetResult(page)
+		if result != "" {
 			parseResult, e := whoisparser.Parse(result)
 			if e == nil {
 				return parseResult.Domain

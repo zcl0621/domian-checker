@@ -13,6 +13,8 @@ RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -tags netcgo -installsuff
 
 FROM alpine as prod
 
+RUN apk add --no-cache -U  tzdata  chromium
+
 COPY --from=build-dist /bin/app /bin/app
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
