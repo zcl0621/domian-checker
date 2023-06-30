@@ -71,7 +71,9 @@ func HandlerJob() {
 					j.DoWhois(&dm)
 					break
 				}
+				logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 				db.Save(&dm)
+				logger.Logger("job save", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 				db.Model(&model.Job{}).Where("id = ?", j.JobId).Update("finish_numb", gorm.Expr("finish_numb + ?", 1))
 			}(&j)
 		}
@@ -125,8 +127,9 @@ func (j *Job) DoWhois(dm *model.Domain) {
 	} else {
 		nameServer := ""
 		for i := range whoisD.NameServers {
-			nameServer += whoisD.NameServers[i]
+			nameServer += whoisD.NameServers[i] + ","
 		}
+		dm.WhoisNameServers = nameServer
 	}
 	logger.Logger("DoWhois checkWhois Date", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	dm.WhoisCreatedDate = whoisD.CreatedDateInTime.Format("2006-01-02 15:04:05")
