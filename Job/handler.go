@@ -59,17 +59,13 @@ func HandlerJob() {
 				db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
 				dm.Domain = j.Domain
 				dm.JobId = j.JobId
-				switch j.JobModel {
-				case "DNS":
+				if j.JobModel == "NDS" {
 					j.DoNsLookUp(&dm)
-					break
-				case "Whois":
+				} else if j.JobModel == "Whois" {
 					j.DoWhois(&dm)
-					break
-				default:
+				} else {
 					j.DoNsLookUp(&dm)
 					j.DoWhois(&dm)
-					break
 				}
 				logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 				db.Save(&dm)
