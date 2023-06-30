@@ -15,7 +15,6 @@ func main() {
 	redisUtils.InitRedis()
 	migrate.DoMigrate()
 	Job.HandlerJob()
-	Job.HandlerJob()
 	err := server.StartGinServer()
 	if err != nil {
 		panic(err)
