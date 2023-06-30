@@ -25,7 +25,6 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		result := GetResult(page)
 		if result != "" {
 			logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
-			page.Close()
 			parseResult, e := whoisparser.Parse(result)
 			if e == nil {
 				return parseResult.Domain
@@ -35,7 +34,6 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		} else {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s 未获取到返回值", j.Domain))
 		}
-		page.Close()
 		time.Sleep(time.Second * 3)
 		count++
 		if count >= 3 {
