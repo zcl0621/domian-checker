@@ -98,6 +98,7 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 	}
 }
 func (j *Job) DoWhois(dm *model.Domain) {
+	logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
 	whoisD := checkWhois(j)
 	if whoisD == nil {
 		dm.WhoisStatus = "no-domain"
