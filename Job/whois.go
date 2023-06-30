@@ -11,6 +11,7 @@ func checkWhois(j *Job) *whoisparser.Domain {
 	defer func() {
 		if err := recover(); err != nil {
 			j.Err = err.(error).Error()
+			logger.Logger("checkWhois", logger.ERROR, nil, err.(error).Error())
 		}
 	}()
 	if j.Domain == "" {
