@@ -1,7 +1,6 @@
 package Job
 
 import (
-	"github.com/likexian/whois"
 	"github.com/miekg/dns"
 	"time"
 )
@@ -39,5 +38,3 @@ var dnsClient = &dns.Client{
 	ReadTimeout:  5 * time.Second,
 	WriteTimeout: 5 * time.Second,
 }
-
-var whoisClient = whois.NewClient()

@@ -1,6 +1,7 @@
 package Job
 
 import (
+	"dns-check/config"
 	"fmt"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -10,17 +11,28 @@ var b *rod.Browser
 
 func OpenBrowser() *rod.Browser {
 	if b == nil {
-		if path, exists := launcher.LookPath(); exists {
-			u := launcher.New().Headless(false).Delete("use-mock-keychain").
-				Set("no-sandbox").
-				Set("user-data-dir", "/tmp/chrome").
+		if config.RunMode == "debug" {
+			u := launcher.New().
+				Headless(false).
+				Delete("use-mock-keychain").
 				Set("proxy", fmt.Sprintf("https://%s:%s@%s:%s", "brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg", "brd.superproxy.io", "22225")).
-				Bin(path).
+				Bin("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome").
 				MustLaunch()
 			b = rod.New().ControlURL(u).MustConnect()
 		} else {
-			panic("not found chrome")
+			if path, exists := launcher.LookPath(); exists {
+				u := launcher.New().Headless(false).Delete("use-mock-keychain").
+					Set("no-sandbox").
+					Set("user-data-dir", "/tmp/chrome").
+					Set("proxy", fmt.Sprintf("https://%s:%s@%s:%s", "brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg", "brd.superproxy.io", "22225")).
+					Bin(path).
+					MustLaunch()
+				b = rod.New().ControlURL(u).MustConnect()
+			} else {
+				panic("not found chrome")
+			}
 		}
+
 	}
 	return b
 }
