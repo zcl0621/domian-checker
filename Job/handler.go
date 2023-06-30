@@ -106,7 +106,9 @@ func (j *Job) DoWhois(dm *model.Domain) {
 		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
-	if len(whoisD.Status) == 0 {
+	if whoisD.Status == nil {
+		dm.WhoisStatus = "no-domain"
+	} else if len(whoisD.Status) == 0 {
 		dm.WhoisStatus = "no-domain"
 	} else {
 		status := ""
@@ -115,7 +117,9 @@ func (j *Job) DoWhois(dm *model.Domain) {
 		}
 		dm.WhoisStatus = status
 	}
-	if len(whoisD.NameServers) == 0 {
+	if whoisD.NameServers == nil {
+		dm.WhoisNameServers = "no-nameServer"
+	} else if len(whoisD.NameServers) == 0 {
 		dm.WhoisNameServers = "no-nameServer"
 	} else {
 		nameServer := ""
