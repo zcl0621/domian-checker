@@ -100,12 +100,12 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 func (j *Job) DoWhois(dm *model.Domain) {
 	logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
 	whoisD := checkWhois(j)
-	logger.Logger("DoWhois checkWhois", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD == nil {
 		dm.WhoisStatus = "no-domain"
 		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
+	logger.Logger("DoWhois checkWhois Status", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD.Status == nil {
 		dm.WhoisStatus = "no-domain"
 	} else if len(whoisD.Status) == 0 {
@@ -117,6 +117,7 @@ func (j *Job) DoWhois(dm *model.Domain) {
 		}
 		dm.WhoisStatus = status
 	}
+	logger.Logger("DoWhois checkWhois NameServers", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD.NameServers == nil {
 		dm.WhoisNameServers = "no-nameServer"
 	} else if len(whoisD.NameServers) == 0 {
@@ -127,6 +128,7 @@ func (j *Job) DoWhois(dm *model.Domain) {
 			nameServer += whoisD.NameServers[i]
 		}
 	}
+	logger.Logger("DoWhois checkWhois Date", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	dm.WhoisCreatedDate = whoisD.CreatedDateInTime.Format("2006-01-02 15:04:05")
 	dm.WhoisExpirationDate = whoisD.ExpirationDateInTime.Format("2006-01-02 15:04:05")
 }
