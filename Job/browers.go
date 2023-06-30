@@ -21,7 +21,7 @@ func OpenBrowser() *rod.Browser {
 			b = rod.New().ControlURL(u).MustConnect()
 		} else {
 			if path, exists := launcher.LookPath(); exists {
-				u := launcher.New().Headless(false).Delete("use-mock-keychain").
+				u := launcher.New().Headless(true).Delete("use-mock-keychain").
 					Set("no-sandbox").
 					Set("user-data-dir", "/tmp/chrome").
 					Set("proxy", fmt.Sprintf("https://%s:%s@%s:%s", "brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg", "brd.superproxy.io", "22225")).
