@@ -2,6 +2,7 @@ package Job
 
 import (
 	"dns-check/config"
+	"dns-check/logger"
 	"fmt"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -40,43 +41,51 @@ func OpenBrowser() *rod.Browser {
 func OpenPage(browser *rod.Browser, url string) *rod.Page {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(err)
+			logger.Logger("OpenPage", logger.ERROR, nil, err.(error).Error())
 			if b != nil {
 				b.Close()
 				b = nil
 			}
 		}
 	}()
-	page := browser.Timeout(time.Second * 5).MustPage(url).CancelTimeout()
-	page.Timeout(time.Second * 5).MustWaitLoad().CancelTimeout()
+
+	page, cancel := browser.MustPage(url).WithCancel()
+	go func(doCancel func()) {
+		ticker := time.NewTicker(time.Second * 20)
+		select {
+		case <-ticker.C:
+			doCancel()
+		}
+	}(cancel)
+	page.MustWaitLoad()
 	return page
 }
 
 func SendSearch(page *rod.Page, search string) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(err)
+			logger.Logger("SendSearch", logger.ERROR, nil, err.(error).Error())
 			if b != nil {
 				page.Close()
 			}
 		}
 	}()
-	input := page.Timeout(time.Second * 5).MustElementX("/html/body/div/div/div/form/input[1]").CancelTimeout()
-	input.Timeout(time.Second * 5).MustInput(search).CancelTimeout()
-	sumbit := page.Timeout(time.Second * 5).MustElementX("/html/body/div/div/div/form/input[2]").CancelTimeout()
-	sumbit.Timeout(time.Second * 5).MustClick().CancelTimeout()
-	page.Timeout(time.Second).MustWaitNavigation()
+	input := page.MustElementX("/html/body/div/div/div/form/input[1]")
+	input.MustInput(search)
+	sumbit := page.MustElementX("/html/body/div/div/div/form/input[2]")
+	sumbit.MustClick()
+	page.MustWaitNavigation()
 }
 
 func GetResult(page *rod.Page) string {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(err)
+			logger.Logger("GetResult", logger.ERROR, nil, err.(error).Error())
 			if b != nil {
 				page.Close()
 			}
 		}
 	}()
-	result := page.Timeout(time.Second * 5).MustElementX("/html/body/div/div/pre").CancelTimeout()
-	return result.Timeout(time.Second * 5).MustText()
+	result := page.MustElementX("/html/body/div/div/pre")
+	return result.MustText()
 }
