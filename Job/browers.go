@@ -50,13 +50,16 @@ func OpenPage(browser *rod.Browser, url string) *rod.Page {
 	}()
 
 	page, cancel := browser.MustPage(url).WithCancel()
-	go func(doCancel func()) {
-		ticker := time.NewTicker(time.Second * 20)
+	go func(doCancel func(), p *rod.Page) {
+		ticker := time.NewTicker(time.Second * 30)
 		select {
 		case <-ticker.C:
-			doCancel()
+			if page != nil {
+				doCancel()
+				page.Close()
+			}
 		}
-	}(cancel)
+	}(cancel, page)
 	page.MustWaitLoad()
 	return page
 }
