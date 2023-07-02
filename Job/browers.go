@@ -10,8 +10,23 @@ import (
 )
 
 var b *rod.Browser
+var count int = 0
 
 func OpenBrowser() *rod.Browser {
+	if count >= 512 {
+		count = 0
+		if b != nil {
+			func() {
+				defer func() {
+					if err := recover(); err != nil {
+						logger.Logger("OpenBrowser", logger.ERROR, nil, err.(error).Error())
+					}
+				}()
+				b.Close()
+				b = nil
+			}()
+		}
+	}
 	if b == nil {
 		if config.RunMode == "debug" {
 			u := launcher.New().
@@ -35,6 +50,7 @@ func OpenBrowser() *rod.Browser {
 		}
 
 	}
+	count++
 	return b
 }
 
