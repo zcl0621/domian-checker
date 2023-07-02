@@ -21,6 +21,9 @@ func checkWhois(j *Job) *whoisparser.Domain {
 	for {
 		brow := OpenBrowser()
 		page := OpenPage(brow, "https://whois.iana.org")
+		if page == nil {
+			continue
+		}
 		SendSearch(page, j.Domain)
 		result := GetResult(page)
 		page.Close()
