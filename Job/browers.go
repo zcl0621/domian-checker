@@ -22,7 +22,7 @@ func OpenBrowser() *rod.Browser {
 				MustLaunch()
 			b = rod.New().ControlURL(u).MustConnect()
 			b.MustIgnoreCertErrors(true)
-			go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg")()
+			go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-zone3", "jgoc681md5oa")()
 		} else {
 			if path, exists := launcher.LookPath(); exists {
 				u := launcher.New().Headless(true).Delete("use-mock-keychain").
@@ -33,7 +33,7 @@ func OpenBrowser() *rod.Browser {
 					MustLaunch()
 				b = rod.New().ControlURL(u).MustConnect()
 				b.MustIgnoreCertErrors(true)
-				go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg")()
+				go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-zone3", "jgoc681md5oa")()
 			} else {
 				panic("not found chrome")
 			}
