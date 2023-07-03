@@ -53,7 +53,6 @@ func OpenPage(browser *rod.Browser, url string) *rod.Page {
 			}
 		}
 	}()
-
 	page, cancel := browser.MustPage(url).WithCancel()
 	go func(doCancel func(), p *rod.Page) {
 		ticker := time.NewTicker(time.Second * 30)
