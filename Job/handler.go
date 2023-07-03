@@ -65,7 +65,9 @@ func HandlerJob() {
 					j.DoWhois(&dm)
 				} else {
 					j.DoNsLookUp(&dm)
-					j.DoWhois(&dm)
+					if dm.Checked == "false" {
+						j.DoWhois(&dm)
+					}
 				}
 				logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 				db.Save(&dm)
