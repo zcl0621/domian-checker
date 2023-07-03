@@ -1,5 +1,5 @@
-docker build --platform linux/amd64 -t dns-backend:41 . && \
-docker save -o backend-41.tar dns-backend:41 && \
-scp backend-41.tar dns_vps:/tmp/backend-41.tar && \
-rm -rf backend-41.tar && \
-docker rmi dns-backend:41
+docker build --platform linux/amd64 -t dns-backend:42 . && \
+docker save -o backend-42.tar dns-backend:42 && \
+scp backend-42.tar dns_vps:/tmp/backend-42.tar && \
+rm -rf backend-42.tar && \
+docker rmi dns-backend:42

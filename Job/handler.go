@@ -59,13 +59,13 @@ func HandlerJob() {
 				db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
 				dm.Domain = j.Domain
 				dm.JobId = j.JobId
-				if j.JobModel == "NDS" {
+				if j.JobModel == "DNS" {
 					j.DoNsLookUp(&dm)
 				} else if j.JobModel == "Whois" {
 					j.DoWhois(&dm)
 				} else {
 					j.DoNsLookUp(&dm)
-					if dm.Checked == "false" {
+					if dm.Checked == "false" || dm.NameServers == "" {
 						j.DoWhois(&dm)
 					}
 				}
