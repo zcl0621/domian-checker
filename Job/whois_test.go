@@ -7,18 +7,21 @@ import (
 )
 
 func TestGetWhois(t *testing.T) {
-	j := &Job{
-		Domain:     "baidu.com",
-		NS:         nil,
-		TryTime:    0,
-		Err:        "",
-		RecordType: "",
-		JobId:      0,
-		JobModel:   "",
+	for i := 0; i <= 1000; i++ {
+		j := &Job{
+			Domain:     "baidu.com",
+			NS:         nil,
+			TryTime:    0,
+			Err:        "",
+			RecordType: "",
+			JobId:      0,
+			JobModel:   "",
+		}
+		x := checkWhois(j)
+		fmt.Printf("%v\n", &j)
+		fmt.Printf("%v\n", x)
 	}
-	x := checkWhois(j)
-	fmt.Printf("%v\n", &j)
-	fmt.Printf("%v\n", x)
+
 }
 
 func TestJob_DoNsLookUpt(t *testing.T) {

@@ -31,19 +31,24 @@ func OpenBrowser() *rod.Browser {
 		if config.RunMode == "debug" {
 			u := launcher.New().
 				Headless(false).
+				Proxy(fmt.Sprintf("https://%s:%s", "brd.superproxy.io", "22225")).
 				Delete("use-mock-keychain").
-				Set("proxy", fmt.Sprintf("https://%s:%s@%s:%s", "brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg", "brd.superproxy.io", "22225")).
 				Bin("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome").
 				MustLaunch()
 			b = rod.New().ControlURL(u).MustConnect()
+			b.MustIgnoreCertErrors(true)
+			go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg")()
 		} else {
 			if path, exists := launcher.LookPath(); exists {
 				u := launcher.New().Headless(true).Delete("use-mock-keychain").
 					Set("no-sandbox").
-					Set("proxy", fmt.Sprintf("https://%s:%s@%s:%s", "brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg", "brd.superproxy.io", "22225")).
+					Delete("use-mock-keychain").
+					Proxy(fmt.Sprintf("https://%s:%s", "brd.superproxy.io", "22225")).
 					Bin(path).
 					MustLaunch()
 				b = rod.New().ControlURL(u).MustConnect()
+				b.MustIgnoreCertErrors(true)
+				go b.MustHandleAuth("brd-customer-hl_3cf009f7-zone-data_center", "wqt22u1s0uyg")()
 			} else {
 				panic("not found chrome")
 			}
