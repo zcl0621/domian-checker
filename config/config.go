@@ -48,11 +48,9 @@ func retrieveEnvOrDefault(key string, defaultValue string) string {
 }
 
 type configYaml struct {
-	Http          httpYaml     `yaml:"http"`
-	ProxyUserName string       `yaml:"proxy_username"`
-	ProxyPassword string       `yaml:"proxy_password"`
-	DataBase      databaseYaml `yaml:"database"`
-	Redis         redisYaml    `yaml:"redis"`
+	Http     httpYaml     `yaml:"http"`
+	DataBase databaseYaml `yaml:"database"`
+	Redis    redisYaml    `yaml:"redis"`
 }
 
 type httpYaml struct {

@@ -19,14 +19,16 @@ func checkWhois(j *Job) *whoisparser.Domain {
 	}
 	var count int
 	for {
-		brow := OpenBrowser()
-		page := OpenPage(brow, "https://whois.iana.org")
-		if page == nil {
+		result, err := whoisClient.Whois(j.Domain, "whois.iana.org")
+		if err != nil {
+			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
+			time.Sleep(time.Second * 3)
+			count++
+			if count >= 3 {
+				break
+			}
 			continue
 		}
-		SendSearch(page, j.Domain)
-		result := GetResult(page)
-		page.Close()
 		if result != "" {
 			logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
 			parseResult, e := whoisparser.Parse(result)
@@ -37,11 +39,6 @@ func checkWhois(j *Job) *whoisparser.Domain {
 			}
 		} else {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s 未获取到返回值", j.Domain))
-		}
-		time.Sleep(time.Second * 3)
-		count++
-		if count >= 3 {
-			break
 		}
 	}
 	return nil

@@ -13,7 +13,7 @@ RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -tags netcgo -installsuff
 
 FROM alpine as prod
 
-RUN apk add --no-cache -U  tzdata  chromium
+RUN apk add --no-cache -U  tzdata
 
 COPY --from=build-dist /bin/app /bin/app
 

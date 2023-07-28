@@ -1,7 +1,9 @@
 package Job
 
 import (
+	"github.com/likexian/whois"
 	"github.com/miekg/dns"
+	"golang.org/x/net/proxy"
 	"time"
 )
 
@@ -37,4 +39,15 @@ var dnsClient = &dns.Client{
 	DialTimeout:  5 * time.Second,
 	ReadTimeout:  5 * time.Second,
 	WriteTimeout: 5 * time.Second,
+}
+
+var whoisClient = whois.NewClient()
+
+func init() {
+	dialer, e := proxy.SOCKS5("tcp", "proxy-manager:24000", nil, proxy.Direct)
+	if e != nil {
+		panic(e)
+	}
+	whoisClient = whoisClient.SetDialer(dialer)
+	whoisClient = whoisClient.SetTimeout(60 * time.Second)
 }
