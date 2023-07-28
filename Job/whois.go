@@ -18,12 +18,16 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		return nil
 	}
 	var count int
+	client := whoisClient
 	for {
-		result, err := whoisClient.Whois(j.Domain, "whois.iana.org")
+		result, err := client.Whois(j.Domain, "whois.iana.org")
 		if err != nil {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
 			time.Sleep(time.Second * 3)
 			count++
+			if count >= 2 {
+				client = whoisProxyClient
+			}
 			if count >= 3 {
 				break
 			}

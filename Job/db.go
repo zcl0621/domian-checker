@@ -41,6 +41,7 @@ var dnsClient = &dns.Client{
 	WriteTimeout: 5 * time.Second,
 }
 
+var whoisProxyClient = whois.NewClient()
 var whoisClient = whois.NewClient()
 
 func init() {
@@ -48,6 +49,6 @@ func init() {
 	if e != nil {
 		panic(e)
 	}
-	whoisClient = whoisClient.SetDialer(dialer)
-	whoisClient = whoisClient.SetTimeout(60 * time.Second)
+	whoisProxyClient = whoisProxyClient.SetDialer(dialer)
+	whoisProxyClient = whoisProxyClient.SetTimeout(60 * time.Second)
 }
