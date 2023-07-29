@@ -2,8 +2,8 @@ package Job
 
 import (
 	"dns-check/logger"
+	"dns-check/whoisparser"
 	"fmt"
-	"github.com/likexian/whois-parser"
 	"time"
 )
 
@@ -28,10 +28,6 @@ func checkWhois(j *Job) *whoisparser.Domain {
 			if count >= 2 {
 				client = whoisProxyClient
 			}
-			if count >= 3 {
-				break
-			}
-			continue
 		}
 		if result != "" {
 			logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
@@ -43,6 +39,9 @@ func checkWhois(j *Job) *whoisparser.Domain {
 			}
 		} else {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s 未获取到返回值", j.Domain))
+		}
+		if count >= 3 {
+			break
 		}
 	}
 	return nil
