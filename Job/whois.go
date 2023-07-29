@@ -4,7 +4,7 @@ import (
 	"dns-check/logger"
 	"dns-check/whoisparser"
 	"fmt"
-	"time"
+	"github.com/likexian/whois"
 )
 
 func checkWhois(j *Job) *whoisparser.Domain {
@@ -18,16 +18,16 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		return nil
 	}
 	var count int
-	client := whoisClient
 	for {
-		result, err := client.Whois(j.Domain, "whois.iana.org")
+		var client *whois.Client
+		if count < 2 {
+			client = newWhois()
+		} else {
+			client = newProxyWhois()
+		}
+		result, err := client.Whois(j.Domain)
 		if err != nil {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
-			time.Sleep(time.Second * 3)
-			count++
-			if count >= 2 {
-				client = whoisProxyClient
-			}
 		}
 		if result != "" {
 			logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
@@ -40,6 +40,8 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		} else {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s 未获取到返回值", j.Domain))
 		}
+
+		count++
 		if count >= 3 {
 			break
 		}

@@ -41,14 +41,17 @@ var dnsClient = &dns.Client{
 	WriteTimeout: 5 * time.Second,
 }
 
-var whoisProxyClient = whois.NewClient()
-var whoisClient = whois.NewClient()
+func newWhois() *whois.Client {
+	return whois.NewClient()
+}
 
-func init() {
+func newProxyWhois() *whois.Client {
+	var whoisProxyClient = whois.NewClient()
 	dialer, e := proxy.SOCKS5("tcp", "proxy-manager:24000", nil, proxy.Direct)
 	if e != nil {
 		panic(e)
 	}
 	whoisProxyClient = whoisProxyClient.SetDialer(dialer)
 	whoisProxyClient = whoisProxyClient.SetTimeout(60 * time.Second)
+	return whoisProxyClient
 }
