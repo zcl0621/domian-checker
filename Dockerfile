@@ -1,4 +1,5 @@
-FROM golang:1.19-alpine AS build-dist
+FROM golang:1.19 AS build-dist
+
 WORKDIR /go/cache
 
 ADD go.mod .
