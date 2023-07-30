@@ -25,7 +25,7 @@ func checkWhois(j *Job) *whoisparser.Domain {
 		} else {
 			client = newProxyWhois()
 		}
-		result, err := client.Whois(j.Domain)
+		result, err := client.Whois(j.Domain, "whois.iana.org")
 		if err != nil {
 			logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
 		}
