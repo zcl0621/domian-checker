@@ -12,32 +12,28 @@ import (
 )
 
 func TestKuaiDaili(t *testing.T) {
-	//u, e := url.Parse("http://brd-customer-hl_3cf009f7-zone-data_center:9yvrj6jf2bqk@brd.superproxy.io:22225")
-	//if e != nil {
-	//	panic(e)
-	//}
-	//dialer, e := proxy.FromURL(u, proxy.Direct)
 
-	//dialer, e := proxy.SOCKS5("tcp", "127.0.0.1:24000", nil, proxy.Direct)
-	//if e != nil {
-	//	panic(e)
-	//}
 	// 创建 WHOIS 客户端
 	client := whois.NewClient()
 
-	//client = client.SetDialer(dialer)
 	client = client.SetTimeout(60 * time.Second)
 
 	result, rerr := client.Whois("w3schools.co", "whois.iana.org")
 	if rerr != nil {
-		panic(rerr)
+		t.Errorf("Error in WHOIS: %v", rerr)
+		return
 	}
 	fmt.Printf("%v\n", result)
 	parseResult, e := whoisparser.Parse(result)
 	if e != nil {
-		panic(e)
+		t.Errorf("Error parsing WHOIS result: %v", e)
+		return
 	}
-	d, _ := json.Marshal(parseResult)
+	d, marshallErr := json.Marshal(parseResult)
+	if marshallErr != nil {
+		t.Errorf("Cannot marshal result: %v", marshallErr)
+		return
+	}
 	fmt.Printf("%s\n", d)
 }
 

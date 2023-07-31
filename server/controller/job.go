@@ -277,78 +277,33 @@ func convertToCsv(data *[]model.Domain, j *model.Job) ([]byte, error) {
 
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
-	switch j.JobModel {
-	case "DNS":
-		e := exportDNS(writer, data)
-		if e != nil {
-			return nil, e
-		}
-		break
-	case "Whois":
-		e := exportWhois(writer, data)
-		if e != nil {
-			return nil, e
-		}
-		break
-	default:
-		e := exportMix(writer, data)
-		if e != nil {
-			return nil, e
-		}
-		break
+	e := exportMix(writer, data)
+	if e != nil {
+		return nil, e
 	}
 	return ioutil.ReadFile(file.Name())
 }
 
-func exportDNS(w *csv.Writer, data *[]model.Domain) error {
-	if err := w.Write([]string{"域", "服务器", "结果", "状态"}); err != nil {
-		return err
-	}
-	// 写入数据
-	for _, domain := range *data {
-		if domain.RCode == "" {
-			domain.RCode = "未知"
-		}
-		if domain.Checked == "true" {
-			domain.Checked = "taken"
-		} else {
-			domain.Checked = "free"
-		}
-		if err := w.Write([]string{domain.Domain, domain.NameServers, domain.RCode, domain.Checked}); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func exportWhois(w *csv.Writer, data *[]model.Domain) error {
-	if err := w.Write([]string{"域", "服务器", "创建时间", "过期时间", "状态"}); err != nil {
-		return err
-	}
-	// 写入数据
-	for _, domain := range *data {
-		if err := w.Write([]string{domain.Domain, domain.WhoisNameServers, domain.WhoisCreatedDate, domain.WhoisExpirationDate, domain.WhoisStatus}); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func exportMix(w *csv.Writer, data *[]model.Domain) error {
-	if err := w.Write([]string{"域", "DNS服务器", "DNS结果", "DNS状态", "Whois服务器", "Whois创建时间", "Whois过期时间", "Whois状态"}); err != nil {
+	if err := w.Write([]string{"域", "DNS", "状态", "创建时间", "过期时间", "Whois状态"}); err != nil {
 		return err
 	}
 	// 写入数据
 	for _, domain := range *data {
-		if domain.RCode == "" {
-			domain.RCode = "未知"
+		var ns string
+		if domain.NameServers != "" {
+			ns = domain.NameServers
 		}
+		if domain.WhoisNameServers != "" {
+			ns = domain.WhoisNameServers
+		}
+		var checked string
 		if domain.Checked == "true" {
-			domain.Checked = "taken"
+			checked = "taken"
 		} else {
-			domain.Checked = "free"
+			checked = "free"
 		}
-		if err := w.Write([]string{domain.Domain, domain.NameServers, domain.RCode, domain.Checked, domain.WhoisNameServers, domain.WhoisCreatedDate, domain.WhoisExpirationDate, domain.WhoisStatus}); err != nil {
+		if err := w.Write([]string{domain.Domain, ns, checked, domain.WhoisCreatedDate, domain.WhoisExpirationDate, domain.WhoisStatus}); err != nil {
 			return err
 		}
 	}
