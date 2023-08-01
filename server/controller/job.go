@@ -4,8 +4,6 @@ import (
 	"dns-check/Job"
 	"dns-check/database"
 	"dns-check/model"
-	"dns-check/redisUtils"
-	"dns-check/utils"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -61,6 +59,10 @@ type addJobResponse struct {
 }
 
 func AddJob(c *gin.Context) {
+	if Job.GetCount() >= 10000 {
+		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "任务数量已达上限"})
+		return
+	}
 	var request addJobRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "参数错误"})
@@ -85,15 +87,15 @@ func AddJob(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, &addJobResponse{Id: job.ID, JobModel: job.JobModel, Domains: request.Domains, Status: job.Status})
 	go func(domains *[]string, jobId uint) {
+		var jobs []*Job.Job
 		for i := 0; i < len(*domains); i++ {
-			rJ := Job.Job{
+			jobs = append(jobs, &Job.Job{
 				Domain:   (*domains)[i],
 				JobId:    jobId,
 				JobModel: request.JobModel,
-			}
-			d, _ := json.Marshal(rJ)
-			redisUtils.LPush(fmt.Sprintf("job_%d", jobId), d)
+			})
 		}
+		Job.AddJob(jobs)
 	}(&request.Domains, job.ID)
 }
 
@@ -118,18 +120,6 @@ func StartJob(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "任务状态错误"})
 		return
 	}
-	ok, _ := redisUtils.Exists("current_job")
-	if ok {
-		currentJobByte, err := redisUtils.Get("current_job")
-		if err == nil {
-			jobIdStr := fmt.Sprintf("%s", currentJobByte)
-			jobId := utils.ConvertAStringToInt(jobIdStr)
-			if jobId != 0 {
-				db.Model(&model.Job{}).Where("id = ?", jobId).Updates(&model.Job{Status: 3})
-			}
-		}
-	}
-	redisUtils.Set("current_job", []byte(fmt.Sprintf("%d", job.ID)), 0)
 	job.Status = 2
 	db.Save(&job)
 	c.JSON(http.StatusOK, &oneResponse{
@@ -160,7 +150,6 @@ func PausedJob(c *gin.Context) {
 	}
 	job.Status = 3
 	db.Save(&job)
-	redisUtils.Del("current_job")
 	c.JSON(http.StatusOK, &oneResponse{
 		Id:         job.ID,
 		CreatedAt:  job.CreatedAt,
@@ -185,8 +174,6 @@ func EndJob(c *gin.Context) {
 	}
 	job.Status = 4
 	db.Save(&job)
-	redisUtils.Del("current_job")
-	redisUtils.Del(fmt.Sprintf("job_%d", request.Id))
 	c.JSON(http.StatusOK, &oneResponse{
 		Id:         job.ID,
 		CreatedAt:  job.CreatedAt,
@@ -291,16 +278,15 @@ func exportMix(w *csv.Writer, data *[]model.Domain) error {
 	// 写入数据
 	for _, domain := range *data {
 		var ns string
-		if domain.NameServers != "" {
+		if domain.NameServers != "" && domain.WhoisNameServers != "" {
+			ns = domain.NameServers + "|" + domain.WhoisNameServers
+		} else if domain.WhoisNameServers != "" {
+			ns = domain.WhoisNameServers
+		} else if domain.NameServers != "" {
 			ns = domain.NameServers
 		}
-		if domain.WhoisNameServers != "" {
-			ns = domain.WhoisNameServers
-		}
-		var checked string
-		if domain.Checked == "true" {
-			checked = "taken"
-		} else {
+		checked := "taken"
+		if domain.Checked != "true" {
 			checked = "free"
 		}
 		if err := w.Write([]string{domain.Domain, ns, checked, domain.WhoisCreatedDate, domain.WhoisExpirationDate, domain.WhoisStatus}); err != nil {

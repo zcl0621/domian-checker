@@ -4,78 +4,68 @@ import (
 	"dns-check/database"
 	"dns-check/logger"
 	"dns-check/model"
-	"dns-check/redisUtils"
-	"dns-check/utils"
-	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
-	"time"
 )
 
 func HandlerJob() {
 	go func() {
 		for {
-			currentJobByte, err := redisUtils.Get("current_job")
-			if err != nil {
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			jobLen, err := redisUtils.LLen(fmt.Sprintf("job_%s", currentJobByte))
-			if err != nil {
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			if jobLen == 0 {
-				redisUtils.Del("current_job")
-				db := database.GetInstance()
-				jobIdStr := fmt.Sprintf("%s", currentJobByte)
-				jobId := utils.ConvertAStringToInt(jobIdStr)
-				db.Model(&model.Job{}).Where("id = ?", jobId).Update("status", 4)
-				redisUtils.Del(fmt.Sprintf("job_%s", currentJobByte))
-				continue
-			}
-			d, err := redisUtils.LRPop(fmt.Sprintf("job_%s", currentJobByte))
-			if err != nil {
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			var j Job
-			err = json.Unmarshal(d, &j)
-			if err != nil {
-				continue
-			}
-			if j.Domain == "" {
-				continue
-			}
-			func(j *Job) {
-				defer func() {
-					if err := recover(); err != nil {
-						logger.Logger("job", logger.ERROR, nil, err.(error).Error())
-						redisUtils.LPush("job", d)
-					}
-				}()
-				db := database.GetInstance()
-				var dm model.Domain
-				db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
-				dm.Domain = j.Domain
-				dm.JobId = j.JobId
-				if j.JobModel == "DNS" {
-					j.DoNsLookUp(&dm)
-				} else if j.JobModel == "Whois" {
-					j.DoWhois(&dm)
-				} else {
-					j.DoNsLookUp(&dm)
-					if dm.Checked == "false" || dm.NameServers == "" {
-						j.DoWhois(&dm)
-					}
-				}
-				logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
-				db.Save(&dm)
-				logger.Logger("job save", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
-				db.Model(&model.Job{}).Where("id = ?", j.JobId).Update("finish_numb", gorm.Expr("finish_numb + ?", 1))
-			}(&j)
+			j := <-AllJob
+			do(j)
 		}
 	}()
+}
+
+func do(j *Job) {
+	if j == nil {
+		return
+	}
+	if j.Domain == "" {
+		return
+	}
+	logger.Logger("job do", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
+	func(j *Job) {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Logger("job", logger.ERROR, nil, err.(error).Error())
+			}
+		}()
+		db := database.GetInstance()
+		var jm model.Job
+		db.Where("id = ?", j.JobId).First(&jm)
+		if jm.Status != 2 {
+			return
+		}
+		var dm model.Domain
+		db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
+		dm.Domain = j.Domain
+		dm.JobId = j.JobId
+		if j.JobModel == "DNS" {
+			j.DoNsLookUp(&dm)
+		} else if j.JobModel == "Whois" {
+			j.DoWhois(&dm)
+		} else {
+			j.DoNsLookUp(&dm)
+			if dm.Checked == "false" || dm.NameServers == "" {
+				j.DoWhois(&dm)
+			}
+		}
+		//logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
+		db.Save(&dm)
+		//logger.Logger("job save", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
+		db.Model(&model.Job{}).
+			Where("id = ?", j.JobId).
+			Updates(map[string]interface{}{
+				"finish_numb": gorm.Expr("finish_numb + ?", 1),
+				"status": gorm.Expr(`
+			CASE
+				WHEN finish_numb + 1 = domain_numb THEN 4
+				ELSE status
+			END
+		`),
+			})
+	}(j)
 }
 
 func (j *Job) DoNsLookUp(dm *model.Domain) {
@@ -98,14 +88,14 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 	}
 }
 func (j *Job) DoWhois(dm *model.Domain) {
-	logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
+	//logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
 	whoisD := checkWhois(j)
 	if whoisD == nil {
 		dm.WhoisStatus = "no-domain"
 		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
-	logger.Logger("DoWhois checkWhois Status", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
+	//logger.Logger("DoWhois checkWhois Status", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD.Status == nil {
 		dm.WhoisStatus = "no-domain"
 	} else if len(whoisD.Status) == 0 {

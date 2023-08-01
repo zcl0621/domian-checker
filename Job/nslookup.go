@@ -1,7 +1,6 @@
 package Job
 
 import (
-	"dns-check/logger"
 	"fmt"
 	"github.com/miekg/dns"
 )
@@ -11,11 +10,11 @@ func dolookup(domain string, dnsServer string) (*[]string, int, error) {
 	m.SetQuestion(dns.Fqdn(domain), dns.TypeNS)
 	r, _, err := dnsClient.Exchange(&m, dnsServer)
 	if err != nil {
-		logger.Logger("dolookup", logger.ERROR, nil, fmt.Sprintf("error: %s", err.Error()))
+		//logger.Logger("dolookup", logger.ERROR, nil, fmt.Sprintf("error: %s", err.Error()))
 		return nil, 0, err
 	}
 	if r.Rcode != dns.RcodeSuccess {
-		logger.Logger("dolookup", logger.WARNING, nil, fmt.Sprintf("Rcode: %d", r.Rcode))
+		//logger.Logger("dolookup", logger.WARNING, nil, fmt.Sprintf("Rcode: %d", r.Rcode))
 		return nil, r.Rcode, nil
 	}
 	var nameServers []string
