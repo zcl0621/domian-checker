@@ -15,7 +15,6 @@ type Job struct {
 	RecordType string
 	JobId      uint
 	JobModel   string //cdns whois mix
-	NextJob    *Job
 }
 
 var DNS = []string{

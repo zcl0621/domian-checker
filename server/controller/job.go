@@ -59,7 +59,7 @@ type addJobResponse struct {
 }
 
 func AddJob(c *gin.Context) {
-	if Job.GetCount() >= 10000 {
+	if Job.GetCount() >= 100000 {
 		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "任务数量已达上限"})
 		return
 	}

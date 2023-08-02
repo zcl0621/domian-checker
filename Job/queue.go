@@ -1,40 +1,32 @@
 package Job
 
 import (
-	"sync"
+	"dns-check/config"
+	"github.com/emirpasic/gods/lists/arraylist"
 	"time"
 )
 
-var MainJob *Job
-var MainLock sync.Mutex
+var MainJob = arraylist.New()
 var totalCount int64
 
-var AllJob = make(chan *Job, 100)
+var AllJob = make(chan *Job, config.ProcessCount*5)
+var DoneJob = make(chan struct{}, config.ProcessCount*5)
 
 func init() {
 	go GetJob()
 }
 
 func GetJob() {
-	// every second get 100 jobs from MainJob add to AllJob
-	ticker := time.NewTicker(time.Second)
 	for {
-		<-ticker.C
-		MainLock.Lock()
-		if MainJob == nil {
-			MainLock.Unlock()
-			continue
+		<-DoneJob
+		j, _ := MainJob.Get(0)
+		if j != nil {
+			AllJob <- j.(*Job)
 		}
-		for i := 0; i < 100; i++ {
-			if MainJob == nil {
-				break
-			}
-			AllJob <- MainJob
-			MainJob = MainJob.NextJob
-			totalCount--
-		}
-		MainLock.Unlock()
+		MainJob.Remove(0)
+		totalCount--
 	}
+	// every second get 100 jobs from MainJob add to AllJob
 }
 
 func GetCount() int64 {
@@ -42,30 +34,23 @@ func GetCount() int64 {
 }
 
 func AddJob(jobs []*Job) {
-	MainLock.Lock()
-	defer MainLock.Unlock()
 	if len(jobs) == 0 {
 		return
 	}
-	if MainJob == nil {
-		totalCount = 1
-		MainJob = jobs[0]
-		jobs = jobs[1:]
-	}
-	currentJob := MainJob
-	for _, job := range jobs {
-		if job == nil {
-			continue
-		}
+	for i := range jobs {
+		MainJob.Add(jobs[i])
 		totalCount++
-		if currentJob.NextJob == nil {
-			currentJob.NextJob = job
-			currentJob = job
-		} else {
-			nextJob := currentJob.NextJob
-			currentJob.NextJob = job
-			job.NextJob = nextJob
-			currentJob = job
-		}
 	}
+	MainJob.Sort(jobComparator)
+}
+
+func jobComparator(a, b interface{}) int {
+	now := time.Now().UnixNano()
+	if now%2 == 0 {
+		return -1
+	}
+	if now%2 != 0 {
+		return 1
+	}
+	return 0
 }

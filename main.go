@@ -14,7 +14,7 @@ func main() {
 	database.GetInstance()
 	redisUtils.InitRedis()
 	migrate.DoMigrate()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < config.ProcessCount; i++ {
 		Job.HandlerJob()
 	}
 	err := server.StartGinServer()
