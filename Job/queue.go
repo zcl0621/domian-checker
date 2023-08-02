@@ -11,9 +11,11 @@ var totalCount int64
 
 var AllJob = make(chan *Job, config.ProcessCount*5)
 var DoneJob = make(chan struct{}, config.ProcessCount*5)
+var AddJobChan = make(chan []*Job, config.ProcessCount*5)
 
 func init() {
 	go GetJob()
+	go addJob()
 }
 
 func GetJob() {
@@ -26,7 +28,6 @@ func GetJob() {
 		MainJob.Remove(0)
 		totalCount--
 	}
-	// every second get 100 jobs from MainJob add to AllJob
 }
 
 func GetCount() int64 {
@@ -34,14 +35,22 @@ func GetCount() int64 {
 }
 
 func AddJob(jobs []*Job) {
-	if len(jobs) == 0 {
-		return
+	AddJobChan <- jobs
+
+}
+
+func addJob() {
+	for {
+		jobs := <-AddJobChan
+		if len(jobs) == 0 {
+			return
+		}
+		for i := range jobs {
+			MainJob.Add(jobs[i])
+			totalCount++
+		}
+		MainJob.Sort(jobComparator)
 	}
-	for i := range jobs {
-		MainJob.Add(jobs[i])
-		totalCount++
-	}
-	MainJob.Sort(jobComparator)
 }
 
 func jobComparator(a, b interface{}) int {

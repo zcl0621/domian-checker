@@ -17,7 +17,6 @@ func HandlerJob() {
 			select {
 			case <-ticker.C:
 				DoneJob <- struct{}{}
-				logger.Logger("handlerJob", logger.INFO, nil, "超时未获取到job")
 			case j := <-AllJob:
 				do(j)
 				DoneJob <- struct{}{}
@@ -30,17 +29,8 @@ func do(j *Job) {
 	if j == nil {
 		return
 	}
-	if j.Domain == "" {
-		return
-	}
 	logger.Logger("job do", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 	db := database.GetInstance()
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Logger("job", logger.ERROR, nil, err.(error).Error())
-		}
-	}()
-	//logger.Logger("job save", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
 	db.Model(&model.Job{}).
 		Where("id = ?", j.JobId).
 		Updates(map[string]interface{}{
@@ -52,6 +42,14 @@ func do(j *Job) {
 			END
 		`),
 		})
+	if j.Domain == "" {
+		return
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Logger("job", logger.ERROR, nil, err.(error).Error())
+		}
+	}()
 	var jm model.Job
 	db.Where("id = ?", j.JobId).First(&jm)
 	if jm.Status != 2 {
