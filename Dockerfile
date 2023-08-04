@@ -10,7 +10,7 @@ WORKDIR /go/release
 
 ADD . .
 
-RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -tags netcgo -installsuffix cgo -o /bin/app main.go
+RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -tags netgo -installsuffix go -o /bin/app main.go
 
 FROM redhat/ubi8-minimal:8.8 as prod
 

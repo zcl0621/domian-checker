@@ -10,6 +10,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/likexian/gokit v0.25.13
 	github.com/likexian/whois v1.15.0
+	github.com/lixiangzhong/dnsutil v1.4.0
 	github.com/miekg/dns v1.1.55
 	golang.org/x/net v0.12.0
 	gopkg.in/yaml.v2 v2.4.0

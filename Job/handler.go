@@ -52,9 +52,6 @@ func do(j *Job) {
 	}()
 	var jm model.Job
 	db.Where("id = ?", j.JobId).First(&jm)
-	if jm.Status != 2 {
-		return
-	}
 	var dm model.Domain
 	db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
 	dm.Domain = j.Domain
@@ -65,7 +62,7 @@ func do(j *Job) {
 		j.DoWhois(&dm)
 	} else {
 		j.DoNsLookUp(&dm)
-		if dm.Checked == "false" || dm.NameServers == "" {
+		if dm.RCode == "999" {
 			j.DoWhois(&dm)
 		}
 	}
@@ -74,9 +71,11 @@ func do(j *Job) {
 }
 
 func (j *Job) DoNsLookUp(dm *model.Domain) {
-	ns, rcode, err := lookupNS(j)
+	ns, status, err := lookupNS(j)
 	if err != nil {
 		dm.Checked = "false"
+		dm.RCode = "999"
+		return
 	}
 	if ns != nil {
 		nss := ""
@@ -85,8 +84,7 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 		}
 		dm.NameServers = nss
 	}
-	dm.RCode = rcode
-	if rcode == "NXDOMAIN" || rcode == "REFUSED" || rcode == "SERVFAIL" {
+	if status == "free" {
 		dm.Checked = "false"
 	} else {
 		dm.Checked = "true"

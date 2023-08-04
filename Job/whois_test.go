@@ -4,9 +4,11 @@ import (
 	"dns-check/model"
 	"dns-check/whoisparser"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/likexian/whois"
 	"github.com/miekg/dns"
+	"net"
 	"testing"
 	"time"
 )
@@ -71,4 +73,33 @@ func TestDNS(t *testing.T) {
 		}
 	}
 	t.Log(nameServers)
+}
+
+func TestDig(t *testing.T) {
+	ip, err := net.LookupHost("zxbcnm.qwe")
+	if err != nil {
+		var lookupNSError *net.DNSError
+		errors.As(err, &lookupNSError)
+		t.Log(lookupNSError)
+		return
+	}
+	t.Log(ip)
+	ns, err := net.LookupNS("zxbcnm.qwe")
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	for i := range ns {
+		fmt.Printf("%s", ns[i].Host)
+	}
+
+}
+
+func TestNS(t *testing.T) {
+	ns, s, err := lookupNS(&Job{Domain: "ashdjkasd.123123"})
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+	t.Log(ns, s)
 }
