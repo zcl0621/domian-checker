@@ -10,7 +10,7 @@ import (
 
 var RunMode string = retrieveEnvOrDefault("RUN_MODE", "debug")
 var Conf *configYaml
-var ProcessCount int = 10
+var ProcessCount int = 20
 
 func InitConf() {
 	if Conf == nil { // 避免反复读取配置文件

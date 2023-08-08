@@ -45,17 +45,15 @@ func do(j *Job) {
 	if j.Domain == "" {
 		return
 	}
+	var dm model.Domain
+	dm.Domain = j.Domain
+	dm.JobId = j.JobId
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Logger("job", logger.ERROR, nil, err.(error).Error())
 		}
+		db.Create(&dm)
 	}()
-	var jm model.Job
-	db.Where("id = ?", j.JobId).First(&jm)
-	var dm model.Domain
-	db.Where(&model.Domain{Domain: j.Domain, JobId: j.JobId}).First(&dm)
-	dm.Domain = j.Domain
-	dm.JobId = j.JobId
 	if j.JobModel == "DNS" {
 		j.DoNsLookUp(&dm)
 	} else if j.JobModel == "Whois" {
@@ -66,8 +64,6 @@ func do(j *Job) {
 			j.DoWhois(&dm)
 		}
 	}
-	//logger.Logger("job switch", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
-	db.Save(&dm)
 }
 
 func (j *Job) DoNsLookUp(dm *model.Domain) {

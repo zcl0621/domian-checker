@@ -20,10 +20,10 @@ func GetInstance() *gorm.DB {
 			log.Panic(err.Error())
 			return nil
 		}
-		sqlDB.SetMaxOpenConns(10)
-		sqlDB.SetMaxIdleConns(5)
-		sqlDB.SetConnMaxIdleTime(time.Minute * 20)
-		sqlDB.SetConnMaxLifetime(time.Hour)
+		sqlDB.SetMaxOpenConns(1024)
+		sqlDB.SetMaxIdleConns(512)
+		sqlDB.SetConnMaxIdleTime(time.Minute)
+		sqlDB.SetConnMaxLifetime(time.Minute)
 	}
 	if config.RunMode == "debug" || config.RunMode == "dev" {
 		DB = DB.Debug()
