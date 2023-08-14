@@ -86,17 +86,6 @@ func AddJob(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, &addJobResponse{Id: job.ID, JobModel: job.JobModel, Domains: request.Domains, Status: job.Status})
-	go func(domains *[]string, jobId uint) {
-		var jobs []*Job.Job
-		for i := 0; i < len(*domains); i++ {
-			jobs = append(jobs, &Job.Job{
-				Domain:   (*domains)[i],
-				JobId:    jobId,
-				JobModel: request.JobModel,
-			})
-		}
-		Job.AddJob(jobs)
-	}(&request.Domains, job.ID)
 }
 
 type jobInfoRequest struct {
@@ -120,6 +109,23 @@ func StartJob(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "任务状态错误"})
 		return
 	}
+	var domains []string
+	err := json.Unmarshal([]byte(job.Domains), &domains)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &errorResponse{ErrorCode: "任务数据错误"})
+		return
+	}
+	go func(domains *[]string, jobId uint, jobModel string) {
+		var jobs []*Job.Job
+		for i := 0; i < len(*domains); i++ {
+			jobs = append(jobs, &Job.Job{
+				Domain:   (*domains)[i],
+				JobId:    jobId,
+				JobModel: jobModel,
+			})
+		}
+		Job.AddJob(jobs)
+	}(&domains, job.ID, job.JobModel)
 	job.Status = 2
 	db.Save(&job)
 	c.JSON(http.StatusOK, &oneResponse{
@@ -129,6 +135,7 @@ func StartJob(c *gin.Context) {
 		DomainNumb: job.DomainNumb,
 		Status:     job.Status,
 	})
+
 }
 
 func PausedJob(c *gin.Context) {
@@ -272,7 +279,7 @@ func convertToCsv(data *[]model.Domain, j *model.Job) ([]byte, error) {
 }
 
 func exportMix(w *csv.Writer, data *[]model.Domain) error {
-	if err := w.Write([]string{"域", "DNS", "状态", "创建时间", "过期时间", "Whois状态"}); err != nil {
+	if err := w.Write([]string{"Domain", "DNS", "Status", "Created Date", "Expires Date", "Domain Status"}); err != nil {
 		return err
 	}
 	// 写入数据

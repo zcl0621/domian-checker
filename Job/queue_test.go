@@ -55,7 +55,7 @@ func TestAddJob(t *testing.T) {
 	for {
 		j := <-AllJob
 		fmt.Println(j)
-		DoneJob <- struct{}{}
+		DoneJob <- 0
 	}
 
 }

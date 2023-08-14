@@ -2,12 +2,13 @@ package Job
 
 import (
 	"dns-check/model"
-	"dns-check/whoisparser"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/likexian/whois"
+	"github.com/likexian/whois-parser"
 	"github.com/miekg/dns"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -41,11 +42,19 @@ func TestKuaiDaili(t *testing.T) {
 
 func TestDomain(t *testing.T) {
 	var dm model.Domain
-	tj := &Job{Domain: "google.co"}
+	tj := &Job{Domain: "dell.co.uk"}
 	tj.DoNsLookUp(&dm)
 	fmt.Println("dm.Checked", dm.Checked, "dm.NameServers", dm.NameServers)
-	tj.DoWhois(&dm)
+	tj.DoWhois(&dm, true)
 	fmt.Printf("%v", dm)
+}
+
+func TestWhois(t *testing.T) {
+	tj := &Job{Domain: "dell.co.uk"}
+	whoisD := checkWhois(tj, false)
+	if whoisD != nil {
+		fmt.Printf("%v", whoisD)
+	}
 }
 
 func TestDNS(t *testing.T) {
@@ -96,10 +105,39 @@ func TestDig(t *testing.T) {
 }
 
 func TestNS(t *testing.T) {
-	ns, s, err := lookupNS(&Job{Domain: "ashdjkasd.123123"})
+	ns, s, err := lookupNS(&Job{Domain: "dropbox.co"})
 	if err != nil {
 		t.Log(err.Error())
 		return
 	}
 	t.Log(ns, s)
+}
+
+func TestWhoisQuery(t *testing.T) {
+	server := "ianawhois.vip.icann.org"
+	whoiscontent := ""
+	conn, err := net.Dial("tcp", server+":43")
+	if err != nil {
+		fmt.Println("err : ", err)
+		t.Errorf(err.Error())
+	}
+	defer conn.Close()
+	inputInfo := "dell.co.uk" + "\r\n"
+	_, err = conn.Write([]byte(inputInfo))
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	for {
+		buf := [512]byte{}
+		n, err := conn.Read(buf[:])
+		if err != nil {
+			if err == io.EOF {
+				whoiscontent += string(buf[:n])
+				fmt.Printf("%s", whoiscontent)
+				return
+			}
+			t.Errorf(err.Error())
+		}
+		whoiscontent += string(buf[:n])
+	}
 }

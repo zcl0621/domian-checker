@@ -2,8 +2,11 @@ package Job
 
 import (
 	"dns-check/config"
+	"dns-check/database"
 	"dns-check/logger"
+	"dns-check/model"
 	"github.com/emirpasic/gods/lists/arraylist"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -11,7 +14,7 @@ var MainJob = arraylist.New()
 var totalCount int64
 
 var AllJob = make(chan *Job, 65535)
-var DoneJob = make(chan struct{}, 65535)
+var DoneJob = make(chan uint, 65535)
 var AddJobChan = make(chan []*Job, config.ProcessCount*5)
 
 func init() {
@@ -21,7 +24,10 @@ func init() {
 
 func GetJob() {
 	for {
-		<-DoneJob
+		jobId := <-DoneJob
+		if jobId != 0 {
+			finishJob(jobId)
+		}
 		func() {
 			defer func() {
 				if err := recover(); err != nil {
@@ -38,13 +44,27 @@ func GetJob() {
 	}
 }
 
+func finishJob(jobId uint) {
+	db := database.GetInstance()
+	db.Model(&model.Job{}).
+		Where("id = ?", jobId).
+		Updates(map[string]interface{}{
+			"finish_numb": gorm.Expr("finish_numb + ?", 1),
+			"status": gorm.Expr(`
+			CASE
+				WHEN finish_numb + 1 = domain_numb THEN 4
+				ELSE status
+			END
+		`),
+		})
+}
+
 func GetCount() int64 {
 	return totalCount
 }
 
 func AddJob(jobs []*Job) {
 	AddJobChan <- jobs
-
 }
 
 func addJob() {

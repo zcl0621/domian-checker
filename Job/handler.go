@@ -5,7 +5,6 @@ import (
 	"dns-check/logger"
 	"dns-check/model"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -16,10 +15,11 @@ func HandlerJob() {
 		for {
 			select {
 			case <-ticker.C:
-				DoneJob <- struct{}{}
+				DoneJob <- 0
 			case j := <-AllJob:
 				do(j)
-				DoneJob <- struct{}{}
+				DoneJob <- j.JobId
+				j = nil
 			}
 		}
 	}()
@@ -30,40 +30,31 @@ func do(j *Job) {
 		return
 	}
 	logger.Logger("job do", logger.INFO, nil, fmt.Sprintf("job %v domain %v", j.JobId, j.Domain))
-	db := database.GetInstance()
-	db.Model(&model.Job{}).
-		Where("id = ?", j.JobId).
-		Updates(map[string]interface{}{
-			"finish_numb": gorm.Expr("finish_numb + ?", 1),
-			"status": gorm.Expr(`
-			CASE
-				WHEN finish_numb + 1 = domain_numb THEN 4
-				ELSE status
-			END
-		`),
-		})
-	if j.Domain == "" {
-		return
-	}
 	var dm model.Domain
 	dm.Domain = j.Domain
 	dm.JobId = j.JobId
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Logger("job", logger.ERROR, nil, err.(error).Error())
+	if j.Domain != "" {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Logger("job", logger.ERROR, nil, err.(error).Error())
+			}
+		}()
+		if j.JobModel == "DNS" {
+			j.DoNsLookUp(&dm)
+		} else if j.JobModel == "Whois" {
+			j.DoWhois(&dm, true)
+		} else if j.JobModel == "WhoisNoProxy" {
+			j.DoWhois(&dm, false)
 		}
-		db.Create(&dm)
-	}()
-	if j.JobModel == "DNS" {
-		j.DoNsLookUp(&dm)
-	} else if j.JobModel == "Whois" {
-		j.DoWhois(&dm)
-	} else {
-		j.DoNsLookUp(&dm)
-		if dm.RCode == "999" {
-			j.DoWhois(&dm)
-		}
+		//else {
+		//	j.DoNsLookUp(&dm)
+		//	if dm.RCode == "999" {
+		//		j.DoWhois(&dm)
+		//	}
+		//}
 	}
+	db := database.GetInstance()
+	db.Create(&dm)
 }
 
 func (j *Job) DoNsLookUp(dm *model.Domain) {
@@ -86,9 +77,9 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 		dm.Checked = "true"
 	}
 }
-func (j *Job) DoWhois(dm *model.Domain) {
+func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 	//logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
-	whoisD := checkWhois(j)
+	whoisD := checkWhois(j, useProxy)
 	if whoisD == nil {
 		dm.WhoisStatus = "no-domain"
 		dm.WhoisNameServers = "no-nameServer"
@@ -117,18 +108,28 @@ func (j *Job) DoWhois(dm *model.Domain) {
 		}
 		dm.WhoisNameServers = nameServer
 	}
-	if whoisD.CreatedDateInTime == nil {
-		dm.WhoisCreatedDate = "no-date"
-	} else if whoisD.CreatedDateInTime.IsZero() {
+	if whoisD.CreatedDate == "" {
 		dm.WhoisCreatedDate = "no-date"
 	} else {
-		dm.WhoisCreatedDate = whoisD.CreatedDateInTime.Format("2006-01-02 15:04:05")
+		if whoisD.CreatedDateInTime == nil {
+			dm.WhoisCreatedDate = whoisD.CreatedDate
+		} else if whoisD.CreatedDateInTime.IsZero() {
+			dm.WhoisCreatedDate = whoisD.CreatedDate
+		} else {
+			dm.WhoisCreatedDate = whoisD.CreatedDateInTime.Format("2006-01-02 15:04:05")
+		}
+
 	}
-	if whoisD.ExpirationDateInTime == nil {
-		dm.WhoisExpirationDate = "no-date"
-	} else if whoisD.ExpirationDateInTime.IsZero() {
+	if whoisD.ExpirationDate == "" {
 		dm.WhoisExpirationDate = "no-date"
 	} else {
-		dm.WhoisExpirationDate = whoisD.ExpirationDateInTime.Format("2006-01-02 15:04:05")
+		if whoisD.ExpirationDateInTime == nil {
+			dm.WhoisExpirationDate = whoisD.ExpirationDate
+		} else if whoisD.ExpirationDateInTime.IsZero() {
+			dm.WhoisExpirationDate = whoisD.ExpirationDate
+		} else {
+			dm.WhoisExpirationDate = whoisD.ExpirationDateInTime.Format("2006-01-02 15:04:05")
+		}
+
 	}
 }
