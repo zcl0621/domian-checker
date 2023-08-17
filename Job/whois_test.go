@@ -51,7 +51,7 @@ func TestDomain(t *testing.T) {
 
 func TestWhois(t *testing.T) {
 	tj := &Job{Domain: "dell.co.uk"}
-	whoisD := checkWhois(tj, false)
+	whoisD, _ := checkWhois(tj, false)
 	if whoisD != nil {
 		fmt.Printf("%v", whoisD)
 	}

@@ -292,9 +292,13 @@ func exportMix(w *csv.Writer, data *[]model.Domain) error {
 		} else if domain.NameServers != "" {
 			ns = domain.NameServers
 		}
-		checked := "taken"
-		if domain.Checked != "true" {
+		checked := ""
+		if domain.Checked == "true" {
+			checked = "taken"
+		} else if domain.Checked == "false" {
 			checked = "free"
+		} else {
+			checked = domain.Checked
 		}
 		if err := w.Write([]string{domain.Domain, ns, checked, domain.WhoisCreatedDate, domain.WhoisExpirationDate, domain.WhoisStatus}); err != nil {
 			return err

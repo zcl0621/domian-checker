@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func checkWhois(j *Job, useProxy bool) *whoisparser.Domain {
+func checkWhois(j *Job, useProxy bool) (*whoisparser.Domain, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			j.Err = err.(error).Error()
@@ -14,8 +14,9 @@ func checkWhois(j *Job, useProxy bool) *whoisparser.Domain {
 		}
 	}()
 	if j.Domain == "" {
-		return nil
+		return nil, nil
 	}
+	var outErr error
 	var count int
 	for {
 		var client *whois.Client
@@ -30,6 +31,7 @@ func checkWhois(j *Job, useProxy bool) *whoisparser.Domain {
 		}
 		result, err := client.Whois(j.Domain, "whois.iana.org")
 		if err != nil {
+			outErr = err
 			//logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
 		}
 		if result != "" {
@@ -37,7 +39,7 @@ func checkWhois(j *Job, useProxy bool) *whoisparser.Domain {
 			//logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
 			parseResult, e := whoisparser.Parse(results[len(results)-1])
 			if e == nil {
-				return parseResult.Domain
+				return parseResult.Domain, nil
 			}
 			//else {
 			//	logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s 格式化错误", j.Domain, result))
@@ -52,5 +54,5 @@ func checkWhois(j *Job, useProxy bool) *whoisparser.Domain {
 			break
 		}
 	}
-	return nil
+	return nil, outErr
 }

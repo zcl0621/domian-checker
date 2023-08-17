@@ -60,7 +60,7 @@ func do(j *Job) {
 func (j *Job) DoNsLookUp(dm *model.Domain) {
 	ns, status, err := lookupNS(j)
 	if err != nil {
-		dm.Checked = "false"
+		dm.Checked = "error"
 		dm.RCode = "999"
 		return
 	}
@@ -79,18 +79,28 @@ func (j *Job) DoNsLookUp(dm *model.Domain) {
 }
 func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 	//logger.Logger("DoWhois", logger.INFO, nil, fmt.Sprintf("%v", j))
-	whoisD := checkWhois(j, useProxy)
+	whoisD, err := checkWhois(j, useProxy)
+	if err != nil {
+		dm.Checked = "error"
+		dm.WhoisStatus = "no-domain"
+		dm.WhoisNameServers = "no-nameServer"
+		return
+	}
 	if whoisD == nil {
+		dm.Checked = "false"
 		dm.WhoisStatus = "no-domain"
 		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
 	//logger.Logger("DoWhois checkWhois Status", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD.Status == nil {
+		dm.Checked = "false"
 		dm.WhoisStatus = "no-domain"
 	} else if len(whoisD.Status) == 0 {
+		dm.Checked = "false"
 		dm.WhoisStatus = "no-domain"
 	} else {
+		dm.Checked = "true"
 		status := ""
 		for i := range whoisD.Status {
 			status += whoisD.Status[i] + ","
