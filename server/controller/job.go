@@ -267,14 +267,18 @@ func convertToCsv(data *[]model.Domain, j *model.Job) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		file.Close()
+		os.Remove(file.Name())
+	}()
 
 	writer := csv.NewWriter(file)
-	defer writer.Flush()
+
 	e := exportMix(writer, data)
 	if e != nil {
 		return nil, e
 	}
+	writer.Flush()
 	return ioutil.ReadFile(file.Name())
 }
 

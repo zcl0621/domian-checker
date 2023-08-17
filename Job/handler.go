@@ -82,23 +82,17 @@ func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 	whoisD, err := checkWhois(j, useProxy)
 	if err != nil {
 		dm.Checked = "error"
-		dm.WhoisStatus = "no-domain"
-		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
 	if whoisD == nil {
 		dm.Checked = "false"
-		dm.WhoisStatus = "no-domain"
-		dm.WhoisNameServers = "no-nameServer"
 		return
 	}
 	//logger.Logger("DoWhois checkWhois Status", logger.INFO, nil, fmt.Sprintf("job %v whoisD %v", j, whoisD))
 	if whoisD.Status == nil {
 		dm.Checked = "false"
-		dm.WhoisStatus = "no-domain"
 	} else if len(whoisD.Status) == 0 {
 		dm.Checked = "false"
-		dm.WhoisStatus = "no-domain"
 	} else {
 		dm.Checked = "true"
 		status := ""
@@ -107,11 +101,7 @@ func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 		}
 		dm.WhoisStatus = status
 	}
-	if whoisD.NameServers == nil {
-		dm.WhoisNameServers = "no-nameServer"
-	} else if len(whoisD.NameServers) == 0 {
-		dm.WhoisNameServers = "no-nameServer"
-	} else {
+	if whoisD.NameServers != nil && len(whoisD.NameServers) != 0 {
 		nameServer := ""
 		for i := range whoisD.NameServers {
 			nameServer += whoisD.NameServers[i] + ","
@@ -119,7 +109,7 @@ func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 		dm.WhoisNameServers = nameServer
 	}
 	if whoisD.CreatedDate == "" {
-		dm.WhoisCreatedDate = "no-date"
+		dm.WhoisCreatedDate = ""
 	} else {
 		if whoisD.CreatedDateInTime == nil {
 			dm.WhoisCreatedDate = whoisD.CreatedDate
@@ -131,7 +121,7 @@ func (j *Job) DoWhois(dm *model.Domain, useProxy bool) {
 
 	}
 	if whoisD.ExpirationDate == "" {
-		dm.WhoisExpirationDate = "no-date"
+		dm.WhoisExpirationDate = ""
 	} else {
 		if whoisD.ExpirationDateInTime == nil {
 			dm.WhoisExpirationDate = whoisD.ExpirationDate
