@@ -1,9 +1,9 @@
 package Job
 
 import (
-	"errors"
 	"fmt"
-	"net"
+	"github.com/lixiangzhong/dnsutil"
+	"strings"
 )
 
 //func dolookup(domain string, dnsServer string) (*[]string, int, error) {
@@ -27,25 +27,50 @@ import (
 //	return &nameServers, 0, nil
 //}
 
+//func dolookup(domain string) (*[]string, string, error) {
+//	var lookupNSError *net.DNSError
+//	var nameServers []string
+//	ns, err := net.LookupNS(domain)
+//	if err != nil {
+//		errors.As(err, &lookupNSError)
+//	} else {
+//		for i := range ns {
+//			nameServers = append(nameServers, ns[i].Host)
+//		}
+//	}
+//	if lookupNSError != nil {
+//		if lookupNSError.IsNotFound {
+//			return nil, "free", nil
+//		} else {
+//			return nil, "", err
+//		}
+//	}
+//	return &nameServers, "taken", nil
+//}
+
 func dolookup(domain string) (*[]string, string, error) {
-	var lookupNSError *net.DNSError
-	var nameServers []string
-	ns, err := net.LookupNS(domain)
+	var lastNS []string
+	var dig dnsutil.Dig
+	rsps, err := dig.Trace(domain)
 	if err != nil {
-		errors.As(err, &lookupNSError)
-	} else {
-		for i := range ns {
-			nameServers = append(nameServers, ns[i].Host)
+		return nil, "", err
+	}
+	for _, rsp := range rsps {
+		var thisNs []string
+		for _, ns := range rsp.Msg.Ns {
+			y := strings.Split(ns.String(), "\t")
+			if len(y) > 1 {
+				thisNs = append(thisNs, y[len(y)-1])
+			}
+		}
+		if len(thisNs) > 0 {
+			lastNS = thisNs
 		}
 	}
-	if lookupNSError != nil {
-		if lookupNSError.IsNotFound {
-			return nil, "free", nil
-		} else {
-			return nil, "", err
-		}
+	if len(lastNS) == 0 {
+		return nil, "free", nil
 	}
-	return &nameServers, "taken", nil
+	return &lastNS, "taken", nil
 }
 
 func lookupNS(j *Job) (*[]string, string, error) {

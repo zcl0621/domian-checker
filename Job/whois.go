@@ -1,6 +1,7 @@
 package Job
 
 import (
+	"errors"
 	"github.com/likexian/whois"
 	"github.com/likexian/whois-parser"
 	"strings"
@@ -29,18 +30,37 @@ func checkWhois(j *Job, useProxy bool) (*whoisparser.Domain, error) {
 				client = newProxyWhois()
 			}
 		}
-		result, err := client.Whois(j.Domain, "whois.iana.org")
+		result, err := client.Whois(j.Domain)
 		if err != nil {
 			outErr = err
 			//logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s", j.Domain, err.Error()))
 		}
 		if result != "" {
-			results := strings.Split(result, "source:       IANA")
-			//logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
-			parseResult, e := whoisparser.Parse(results[len(results)-1])
-			if e == nil {
-				return parseResult.Domain, nil
+			if strings.Contains(result, "Tonic whoisd") {
+				var dms []string
+				lines := strings.Split(result, "\n")
+				for i := 1; i < len(lines); i++ {
+					if strings.Contains(lines[i], ".") {
+						d := strings.Split(lines[i], " ")
+						dms = append(dms, d[len(d)-1])
+					}
+				}
+				if len(dms) == 0 {
+					return nil, errors.New("no domain")
+				}
+				var result whoisparser.Domain
+				result.NameServers = dms
+				result.Status = []string{"active"}
+				return &result, nil
+			} else {
+				results := strings.Split(result, "source:       IANA")
+				//logger.Logger("checkWhois", logger.INFO, nil, fmt.Sprintf("domain %s result %s", j.Domain, result))
+				parseResult, e := whoisparser.Parse(results[len(results)-1])
+				if e == nil {
+					return parseResult.Domain, nil
+				}
 			}
+
 			//else {
 			//	logger.Logger("checkWhois", logger.ERROR, nil, fmt.Sprintf("domain %s result %s 格式化错误", j.Domain, result))
 			//}
